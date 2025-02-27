@@ -83,8 +83,9 @@ parse_args(options_t *options, int *argc, char **argv[]) {
 		case 'f': options->force = true; break;
 		case 'i': options->invert = true; break;
 		case 't': options->truecolor = true; break;
-		case 'v': print_version(stdout);
-			/* FALLTHROUGH */
+		case 'v':
+			print_version(stdout);
+			return EX_USAGE;
 		case 'h': /* help */
 			print_help(stdout, options, NULL);
 			return EX_USAGE;
