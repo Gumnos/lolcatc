@@ -200,7 +200,7 @@ run_file(
 		const char *name
 		) {
 	unsigned char buffer[BUFSIZ];
-	char *cp;
+	unsigned char *cp;
 	size_t byte_count;
 
 	printf("Running %s %i\n", name, (int)colorize);
