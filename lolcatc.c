@@ -203,7 +203,6 @@ run_file(
 	unsigned char *cp;
 	size_t byte_count;
 
-	printf("Running %s %i\n", name, (int)colorize);
 	while ((byte_count = read(fnum, buffer, BUFSIZ))) {
 		for (cp = buffer; byte_count; cp++, byte_count--) {
 			if (colorize) {
