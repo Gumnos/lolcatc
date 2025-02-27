@@ -1,7 +1,10 @@
+#include <err.h>
+#include <inttypes.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -16,6 +19,11 @@ const char * const OPTIONS = "F:hip:S:v"
 	"ad:s:"
 #endif
 	;
+
+typedef struct {
+	double counter;
+	double offset;
+} context_t;
 
 typedef struct {
 	int duration;
@@ -115,6 +123,114 @@ parse_args(options_t *options, int *argc, char **argv[]) {
 	return EX_OK;
 }
 
+char*
+rainbow(
+		options_t *options,
+		context_t *context,
+		unsigned char c
+		) {
+	int r, g, b;
+	double f = options->frequency;
+	r = (int)(sin(f*context->counter + 0) * 127 + 128);
+	g = (int)(sin(f*context->counter + 2*M_PI/3) * 127 + 128);
+	b = (int)(sin(f*context->counter + 4*M_PI/3) * 127 + 128);
+	context->counter += options->spread;
+	if (options->truecolor) {
+		printf("\033[%s;%d;%d;%dm",
+			options->invert ? "49" : "39",
+			r, g, b
+			);
+	} else {
+		printf("\033[%s%s%im",
+			options->invert ? "7;" : "",
+			(r & 0x80 || b & 0x80 || c & 0x80) ? "1;" : "",
+			((r >> 8) & 0x03 ? 1 : 0)
+			|
+			((g >> 8) & 0x03 ? 2 : 0)
+			|
+			((b >> 8) & 0x03 ? 4 : 0)
+			);
+	}
+	putchar(c);
+	if (c == '\n') {
+	}
+}
+
+int
+run_file(
+		options_t *options,
+		context_t *context,
+		int fnum,
+		bool colorize,
+		const char *name
+		) {
+	unsigned char buffer[BUFSIZ];
+	char *cp;
+	size_t byte_count;
+
+	printf("Running %s\n", name);
+	while ((byte_count = read(fnum, buffer, BUFSIZ))) {
+		for (cp = buffer; byte_count; cp++, byte_count--) {
+			if (colorize) {
+				rainbow(options, context, *cp);
+			} else {
+				putchar(*cp);
+			}
+		}
+	}
+	return EX_OK;
+}
+
+int
+run(options_t *options, int argc, char *argv[]) {
+	FILE *fp;
+	const char *name;
+	bool tty;
+	int i, result, fnum;
+	context_t context = {
+		.counter=0,
+		.offset=0,
+		};
+
+	if (argc) {
+		for (i=0; i<argc; i++) {
+			name = argv[i];
+			if (strcmp(name, "-")) {
+				fp = fopen(name, "r");
+				if (!fp) {
+					err(EX_OSERR, "could not open %s", name);
+				}
+			} else {
+				fp = stdin;
+			}
+			fnum = fileno(fp);
+			tty = isatty(fnum);
+			if ((result = run_file(
+					options,
+					&context,
+					fnum,
+					tty || options->force,
+					name
+					)) != EX_OK) {
+				if (fp != stdin) fclose(fp);
+				return result;
+			}
+			if (fp != stdin) fclose(fp);
+		}
+	} else {
+		fnum = fileno(stdin);
+		tty = isatty(fnum);
+		return run_file(
+			options,
+			&context,
+			stdin,
+			tty || options->force,
+			"(stdin)"
+			);
+	}
+	return EX_OK;
+}
+
 int
 main(int argc, char *argv[]) {
 	options_t options = {
@@ -130,5 +246,5 @@ main(int argc, char *argv[]) {
 	int status;
 	if ((status = parse_args(&options, &argc, &argv)) != EX_OK)
 		return status;
-	return EX_OK;
+	return run(&options, argc, argv);
 }
