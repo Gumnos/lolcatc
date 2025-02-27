@@ -132,7 +132,7 @@ parse_args(options_t *options, int *argc, char **argv[]) {
 	return EX_OK;
 }
 
-char*
+void
 rainbow(
 		options_t *options,
 		context_t *context,
