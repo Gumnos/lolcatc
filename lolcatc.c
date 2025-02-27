@@ -14,7 +14,7 @@
 
 const char * const PROGNAME = "lolcatc";
 const char * const VERSION = "0.1.0";
-const char * const OPTIONS = "F:hip:S:v"
+const char * const OPTIONS = "afitvhdF:p:S:"
 #ifdef ANIMATE
 	"ad:s:"
 #endif
@@ -50,8 +50,8 @@ print_version(FILE *fp) {
 
 void
 print_help(FILE *fp, const options_t *options, const char *msg) {
-	if (msg) fprintf(fp, "error: %s\n", msg);
-	fprintf(fp, "\n%s [options] [filename]\n", PROGNAME);
+	if (msg) fprintf(fp, "error: %s\n\n", msg);
+	fprintf(fp, "%s [options] [filename]\n", PROGNAME);
 	fprintf(fp, " -v  Version\n");
 	fprintf(fp, " -h  This help\n");
 	fprintf(fp, " -p  Spread (default=%0.2f)\n", options->spread);
@@ -72,13 +72,28 @@ parse_args(options_t *options, int *argc, char **argv[]) {
 	int ch;
 	while ((ch = getopt(*argc, *argv, OPTIONS)) != -1) {
 		switch (ch) {
-		case 'a':
-			options->animate = true;
-			break;
+		/* no args */
+		case 'a': options->animate = true; break;
+		case 'f': options->force = true; break;
+		case 'i': options->invert = true; break;
+		case 't': options->truecolor = true; break;
+		case 'v': print_version(stdout);
+			/* FALLTHROUGH */
+		case 'h': /* help */
+			print_help(stdout, options, NULL);
+			return EX_USAGE;
+		/* things that have args */
 		case 'd':
 			options->duration = atoi(optarg);
 			if (options->duration <= 1) {
 				print_help(stderr, options, "bad duration");
+				return EX_USAGE;
+			}
+			break;
+		case 'p':
+			options->spread = atof(optarg);
+			if (!valid_double(options->spread)) {
+				print_help(stderr, options, "bad spread");
 				return EX_USAGE;
 			}
 			break;
@@ -96,26 +111,13 @@ parse_args(options_t *options, int *argc, char **argv[]) {
 				return EX_USAGE;
 			}
 			break;
-		case 'p':
-			options->spread = atof(optarg);
-			if (!valid_double(options->spread)) {
-				print_help(stderr, options, "bad spread");
-				return EX_USAGE;
-			}
-			break;
-		case 'S': /* seed */
+		case 'S':
 			options->seed = atoi(optarg);
 			if (options->seed <= 0) {
 				print_help(stderr, options, "bad seed");
 				return EX_USAGE;
 			}
 			break;
-		case 'v': /* version */
-			print_version(stdout);
-			/* FALLTHROUGH */
-		case 'h': /* help */
-			print_help(stdout, options, NULL);
-			return EX_OK;
 	   }
 	}
 	*argc -= optind;
@@ -136,23 +138,24 @@ rainbow(
 	b = (int)(sin(f*context->counter + 4*M_PI/3) * 127 + 128);
 	context->counter += options->spread;
 	if (options->truecolor) {
-		printf("\033[%s;%d;%d;%dm",
-			options->invert ? "49" : "39",
+		printf("\e[%s;%d;%d;%dm",
+			options->invert ? "48" : "38",
 			r, g, b
 			);
 	} else {
-		printf("\033[%s%s%im",
+		printf("\e[%s%s3%im",
 			options->invert ? "7;" : "",
 			(r & 0x80 || b & 0x80 || c & 0x80) ? "1;" : "",
-			((r >> 8) & 0x03 ? 1 : 0)
+			((r & 0xc0) ? 1 : 0)
 			|
-			((g >> 8) & 0x03 ? 2 : 0)
+			((g & 0xc0) ? 2 : 0)
 			|
-			((b >> 8) & 0x03 ? 4 : 0)
+			((b & 0xc0) ? 4 : 0)
 			);
 	}
 	putchar(c);
 	if (c == '\n') {
+		++context->offset;
 	}
 }
 
@@ -168,7 +171,7 @@ run_file(
 	char *cp;
 	size_t byte_count;
 
-	printf("Running %s\n", name);
+	printf("Running %s %i\n", name, (int)colorize);
 	while ((byte_count = read(fnum, buffer, BUFSIZ))) {
 		for (cp = buffer; byte_count; cp++, byte_count--) {
 			if (colorize) {
@@ -185,7 +188,7 @@ int
 run(options_t *options, int argc, char *argv[]) {
 	FILE *fp;
 	const char *name;
-	bool tty;
+	bool tty = isatty(fileno(stdout));
 	int i, result, fnum;
 	context_t context = {
 		.counter=0,
@@ -204,7 +207,6 @@ run(options_t *options, int argc, char *argv[]) {
 				fp = stdin;
 			}
 			fnum = fileno(fp);
-			tty = isatty(fnum);
 			if ((result = run_file(
 					options,
 					&context,
@@ -219,16 +221,17 @@ run(options_t *options, int argc, char *argv[]) {
 		}
 	} else {
 		fnum = fileno(stdin);
-		tty = isatty(fnum);
-		return run_file(
+		result = run_file(
 			options,
 			&context,
-			stdin,
+			fnum,
 			tty || options->force,
 			"(stdin)"
 			);
 	}
-	return EX_OK;
+	/* reset when done */
+	if (tty || options->force) printf("\e[0m\n");
+	return result;
 }
 
 int
@@ -238,6 +241,7 @@ main(int argc, char *argv[]) {
 		.spread = 3.0,
 		.frequency = 0.1,
 		.invert = false,
+		.truecolor = false,
 		.force = false,
 		.animate = false,
 		.duration = 12,
