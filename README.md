@@ -77,7 +77,7 @@ Most notably, this proves useful for piping to `less(1)`:
 Lastly, the `-i` option creates the rainbow out of the
 **background** color instead of the foreground color.
 
-## Unimplemented features of `lolcat(6)`
+## Unimplemented features
 
 The original `lolcat(6)` offers animation.
 This will never offer that functionality.
