@@ -138,7 +138,7 @@ rainbow(
 	b = (int)(sin(f*context->counter + 4*M_PI/3) * 127 + 128);
 	context->counter += options->spread;
 	if (options->truecolor) {
-		printf("\e[%s;%d;%d;%dm",
+		printf("\e[%s;2;%d;%d;%dm",
 			options->invert ? "48" : "38",
 			r, g, b
 			);
