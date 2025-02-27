@@ -225,6 +225,11 @@ run(options_t *options, int argc, char *argv[]) {
 	context_t context = {
 		.counter=0,
 		.offset=0,
+		.reading_escape=false,
+		.prev_char=0,
+		.prev_r=0,
+		.prev_g=0,
+		.prev_b=0,
 		};
 
 	if (argc) {
