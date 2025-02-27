@@ -44,7 +44,6 @@ typedef struct {
 	bool truecolor;
 } options_t;
 
-inline
 bool
 valid_double(double d) {
 	return d != 0.0 && d != HUGE_VAL && d != -HUGE_VAL;
