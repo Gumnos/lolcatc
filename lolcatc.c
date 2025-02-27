@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <err.h>
 #include <inttypes.h>
 #include <math.h>
@@ -12,6 +13,9 @@
 #define ANIMATE
 */
 
+#define MAX_ANSI_SEQ_LEN 256
+#define ESC '\033'
+
 const char * const PROGNAME = "lolcatc";
 const char * const VERSION = "0.1.0";
 const char * const OPTIONS = "afitvhdF:p:S:"
@@ -21,8 +25,11 @@ const char * const OPTIONS = "afitvhdF:p:S:"
 	;
 
 typedef struct {
+	bool reading_escape;
+	unsigned char prev_char;
 	double counter;
 	double offset;
+	unsigned char buffer[MAX_ANSI_SEQ_LEN];
 } context_t;
 
 typedef struct {
@@ -132,30 +139,42 @@ rainbow(
 		unsigned char c
 		) {
 	int r, g, b;
-	double f = options->frequency;
-	r = (int)(sin(f*context->counter + 0) * 127 + 128);
-	g = (int)(sin(f*context->counter + 2*M_PI/3) * 127 + 128);
-	b = (int)(sin(f*context->counter + 4*M_PI/3) * 127 + 128);
-	context->counter += options->spread;
-	if (options->truecolor) {
-		printf("\e[%s;2;%d;%d;%dm",
-			options->invert ? "48" : "38",
-			r, g, b
-			);
+	double f = options->frequency, a;
+	if (c == ESC) {
+		context->reading_escape = true;
 	} else {
-		printf("\e[%s%s3%im",
-			options->invert ? "7;" : "",
-			(r & 0x80 || b & 0x80 || c & 0x80) ? "1;" : "",
-			((r & 0xc0) ? 1 : 0)
-			|
-			((g & 0xc0) ? 2 : 0)
-			|
-			((b & 0xc0) ? 4 : 0)
-			);
-	}
-	putchar(c);
-	if (c == '\n') {
-		++context->offset;
+		if (context->reading_escape) {
+			if (isalpha(c)) {
+				context->reading_escape = false;
+			}
+		} else {
+			a = context->counter + context->offset;
+			r = (int)(sin(f*a + 0       ) * 127 + 128);
+			g = (int)(sin(f*a + 2*M_PI/3) * 127 + 128);
+			b = (int)(sin(f*a + 4*M_PI/3) * 127 + 128);
+			context->counter += options->spread;
+			if (options->truecolor) {
+				printf("\e[%s;2;%d;%d;%dm",
+					options->invert ? "48" : "38",
+					r, g, b
+					);
+			} else {
+				printf("\e[%s%s3%im",
+					options->invert ? "7;" : "",
+					(r & 0x80 || b & 0x80 || c & 0x80) ? "1;" : "",
+					((r & 0xc0) ? 1 : 0)
+					|
+					((g & 0xc0) ? 2 : 0)
+					|
+					((b & 0xc0) ? 4 : 0)
+					);
+			}
+			putchar(c);
+			if (c == '\n') {
+				++context->offset;
+				context->counter = 0;
+			}
+		}
 	}
 }
 
