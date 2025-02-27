@@ -262,7 +262,7 @@ run(options_t *options, int argc, char *argv[]) {
 			);
 	}
 	/* reset when done */
-	if (tty || options->force) printf("\e[0m\n");
+	if (tty || options->force) printf("\e[m\e[?25h\e[?1;5;2004l");
 	return result;
 }
 
