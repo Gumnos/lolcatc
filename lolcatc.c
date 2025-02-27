@@ -29,7 +29,7 @@ typedef struct {
 	unsigned char prev_char;
 	double counter;
 	double offset;
-	unsigned char buffer[MAX_ANSI_SEQ_LEN];
+	int prev_r, prev_g, prev_b;
 } context_t;
 
 typedef struct {
@@ -144,7 +144,7 @@ rainbow(
 		context->reading_escape = true;
 	} else {
 		if (context->reading_escape) {
-			if (isalpha(c)) {
+			if (isalpha(c) || c == 0x07) {
 				context->reading_escape = false;
 			}
 		} else {
@@ -153,21 +153,34 @@ rainbow(
 			g = (int)(sin(f*a + 2*M_PI/3) * 127 + 128);
 			b = (int)(sin(f*a + 4*M_PI/3) * 127 + 128);
 			context->counter += options->spread;
-			if (options->truecolor) {
-				printf("\e[%s;2;%d;%d;%dm",
-					options->invert ? "48" : "38",
-					r, g, b
-					);
-			} else {
-				printf("\e[%s%s3%im",
-					options->invert ? "7;" : "",
-					(r & 0x80 || b & 0x80 || c & 0x80) ? "1;" : "",
-					((r & 0xc0) ? 1 : 0)
-					|
-					((g & 0xc0) ? 2 : 0)
-					|
-					((b & 0xc0) ? 4 : 0)
-					);
+			if (!options->truecolor) {
+				r = (r & 0xc0) >> 6;
+				b = (b & 0xc0) >> 6;
+				g = (g & 0xc0) >> 6;
+			}
+			if (context->prev_r != r
+					|| context->prev_b != b
+					|| context->prev_g != g
+					) {
+				if (options->truecolor) {
+						printf("\e[%s;2;%d;%d;%dm",
+							options->invert ? "48" : "38",
+							r, g, b
+							);
+				} else {
+					printf("\e[%s%s3%im",
+						options->invert ? "7;" : "",
+						(r & 0x02 || b & 0x02 || c & 0x02) ? "1;" : "21;",
+						((r & 0x03) ? 0x01 : 0)
+						|
+						((g & 0x03) ? 0x02 : 0)
+						|
+						((b & 0x03) ? 0x04 : 0)
+						);
+				}
+				context->prev_r = r;
+				context->prev_b = b;
+				context->prev_g = g;
 			}
 			putchar(c);
 			if (c == '\n') {
