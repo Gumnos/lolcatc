@@ -285,6 +285,11 @@ main(int argc, char *argv[]) {
 		.speed = 20.0,
 		};
 	int status;
+#ifdef __OpenBSD__
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
+#endif
+
 	if ((status = parse_args(&options, &argc, &argv)) != EX_OK)
 		return status;
 	return run(&options, argc, argv);
