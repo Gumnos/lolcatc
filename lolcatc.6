@@ -1,0 +1,85 @@
+.Dd $Mdocdate: Feb 28, 2025 $
+.\" Please adjust this date whenever revising the manpage.
+.Dt LOLCATC 6
+.Os
+.Sh NAME
+.Nm lolcatc
+.Nd rainbow coloring effect for text console display
+.Sh SYNOPSIS
+.Nm lolcatc
+.Op Fl f
+.Op Fl F Ar frequency
+.Op Fl h
+.Op Fl i
+.Op Fl p Ar spread
+.Op Fl S Ar seed
+.Op Fl t
+.Op Fl v
+.Op files
+.Sh DESCRIPTION
+.Nm
+concatenates files or standard input,
+adds rainbow coloring,
+and emits the results on stdout.
+.Pp
+To specify stdin among arguments
+use "\-".
+.Bd -literal -offset indent
+lolcatc file1.txt - file2.txt
+.Ed
+.Sh OPTIONS
+.Pp
+.Nm
+takes the following options:
+.Bl -tag -width Ds
+.It Fl f 
+Force color even when stdout is not a tty.
+.It Fl F Ar frequency
+Frequency of the rainbow effect.
+Low values around 0.0001 give almost monochrome screens.
+Default: 0.1.
+.It Fl h
+Shows options summary.
+.It Fl i 
+Inverts the background and foreground colors.
+.It Fl p Ar spread
+Inclination of the rainbow stripes
+in character widths per line height.
+High values (>1000) give almost horizontal stripes,
+low values (0.1) almost vertical ones.
+Default: 3.0.
+.It Fl S Ar seed
+Not currently implemented.
+Initial value for the random number generator.
+Default
+.Ql 0
+means automatic.
+.It Fl t 
+Enables 24-bit truecolor mode.
+.It Fl v
+Shows lolcatc version.
+.Sh EXAMPLES
+Typical combinations of
+.Nm
+include other programs that generate text.
+.Pp
+Large colorful words can be written like this:
+.Bd -literal -offset indent
+echo "KTHXBAI" | toilet | lolcatc
+.Ed
+.Pp
+Cows are popular, come in all colors, and tell random epigrams:
+.Bd -literal -offset indent
+fortune | cowsay | lolcatc \-t
+.Ed
+.Sh SEE ALSO
+.Xr cat 1 ,
+.Xr toilet 1 ,
+.Xr fortune 6 ,
+.Xr lolcat 6 ,
+.Xr cowsay 6
+.br
+.Sh AUTHOR
+lolcatc was written by Tim Chase <lolcatc@tim.thechases.com>.
+.br
+The original lolcat was written by Moe <moe@busyloop.net>.
