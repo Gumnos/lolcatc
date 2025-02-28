@@ -1,5 +1,5 @@
 PROG = lolcatc
-NOMAN=  noman
-LDADD += ${LIBM}
+MAN =
+LDADD += -lm
 
 .include <bsd.prog.mk>
