@@ -6,9 +6,8 @@ Clones most of the functionality of
 [`lolcat(6)`](https://github.com/busyloop/lolcat/)
 providing 8-bit and 24-bit rainbow coloration
 of files and/or stdin.
-Most notably, this all happens in a single binary written in C,
-rather than requiring the entire Ruby runtime
-like the original does.
+Most notably, this all happens in a single ~20KB binary written in C,
+rather than requiring the entire Ruby runtime like the original does.
 
 ## Building
 
@@ -16,9 +15,6 @@ like the original does.
 On a BSD system, it should be as simple as
 
     $ make
-
-However, at this time, it looks like the `/usr/lib/libm.a`
-wasn't built with `-fPIC` so the `make` command currently fails.
 
 Alternatively, you can use
 
