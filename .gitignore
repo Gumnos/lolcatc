@@ -2,3 +2,6 @@ lolcatc
 *.d
 *.o
 *.sw?
+lolcatc.debug
+lolcatc.full
+.depend
