@@ -125,7 +125,7 @@ parse_args(options_t *options, int *argc, char **argv[]) {
 				return EX_USAGE;
 			}
 			break;
-	   }
+		}
 	}
 	*argc -= optind;
 	*argv += optind;
