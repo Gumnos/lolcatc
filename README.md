@@ -18,7 +18,7 @@ On a BSD system, it should be as simple as
 
 Alternatively, you can use
 
-    $ cc -lm -o lolcatc lolcatc.c
+    $ cc -o lolcatc lolcatc.c -lm
 
 (don't forget to include the math `-lm` library).
 
