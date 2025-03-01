@@ -1,2 +1,2 @@
 lolcatc: lolcatc.c
-	cc -o $@ @< -lm
+	cc -o $@ $< -lm
