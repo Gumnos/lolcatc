@@ -27,6 +27,15 @@ it makes use of the `pledge(2)` system-call
 to reduce privileges to only the required
 file-reading and stdio operations.
 
+If building with GNU `make`,
+it should detect the `GNUmakefile`
+instead of the `Makefile`
+and at least build the project.
+However that file is pretty kneecapped,
+and doesn't have any of the nice features
+that the BSD `include <bsd.proj.mk>` provides
+for things like `clean` and `install` targets.
+
 ## Usage
 
 Behaving similar to `cat(1)`,
